@@ -1,0 +1,33 @@
+# Core dependencies
+PyPDF2>=3.0.0
+pdf2docx>=0.5.0
+python-docx>=0.8.11
+openpyxl>=3.1.0
+
+# Optional but recommended
+pdfplumber>=0.10.0
+tqdm>=4.66.0
+phonenumbers>=8.13.0
+
+# OCR dependencies (choose one or more)
+# Option 1: PaddleOCR (best quality, includes table detection)
+# paddlepaddle>=2.5.0
+# paddleocr>=2.7.0
+
+# Option 2: EasyOCR (good quality, easy setup)
+# easyocr>=1.7.0
+
+# Option 3: Tesseract (basic OCR, requires system install)
+# pytesseract>=0.3.10
+
+# OCR support libraries
+pdf2image>=1.16.0
+Pillow>=10.0.0
+
+# Optional OCR enhancement
+# ocrmypdf>=15.0.0  # Recommended for scanned PDFs
+
+
+
+
+

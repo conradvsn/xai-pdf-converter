@@ -1,0 +1,3 @@
+2026-01-06 11:23:03 | error | ERROR    | log_error:279 | TestError | This is a test error | Context: file=test.pdf
+2026-01-06 11:36:19 | error | ERROR    | log_error:279 | TestError | This is a test error | Context: context=integration_test
+2026-01-06 11:36:21 | error | ERROR    | log_error:279 | TestError | This is a test error | Context: context=integration_test

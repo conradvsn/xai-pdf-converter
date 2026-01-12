@@ -1,0 +1,5 @@
+2026-01-06 11:23:03 | conversion | INFO     | log_conversion:197 | SUCCESS | PDF: test.pdf → DOCX: test.docx | Duration: 15.50s
+2026-01-06 11:36:19 | conversion | INFO     | log_conversion:197 | SUCCESS | PDF: test.pdf → DOCX: test.docx | Duration: 10.50s
+2026-01-06 11:36:19 | conversion | INFO     | log_conversion:197 | SUCCESS | PDF: test.pdf → DOCX: test.docx | Duration: 5.00s
+2026-01-06 11:36:21 | conversion | INFO     | log_conversion:197 | SUCCESS | PDF: test.pdf → DOCX: test.docx | Duration: 10.50s
+2026-01-06 11:36:21 | conversion | INFO     | log_conversion:197 | SUCCESS | PDF: test.pdf → DOCX: test.docx | Duration: 5.00s

@@ -1,0 +1,29 @@
+{
+  "version": "2.0.0",
+  "verbose_logging": false,
+  "show_progress_bars": true,
+  "pdf_directory": "pdf",
+  "output_directory": "output",
+  "pages_per_chunk": 10,
+  "auto_detect_scanned": true,
+  "ocr_language": "en",
+  "ocr_engine_preference": "paddleocr",
+  "detection_thresholds": {
+    "min_person_name_length": 5,
+    "max_person_name_length": 40,
+    "min_company_name_length": 2,
+    "phone_number_validation": true,
+    "email_validation": true
+  },
+  "enable_anonymization": true,
+  "enable_deduplication": true,
+  "grouping_keywords": [],
+  "report_format": "excel",
+  "consolidated_reports": true,
+  "include_images_in_report": true,
+  "theme": "default",
+  "show_file_sizes": true,
+  "developer": "Conrad Vaslin",
+  "developer_role": "xAI Finance Tutor",
+  "copyright": "© 2025 Conrad Vaslin"
+}

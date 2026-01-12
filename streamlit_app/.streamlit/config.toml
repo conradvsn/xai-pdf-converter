@@ -1,0 +1,27 @@
+# Streamlit Configuration
+# xAI PDF Converter Theme - Modern Professional Design
+
+[theme]
+# Primary colors - Modern blue-purple gradient
+primaryColor = "#6366f1"  # Modern indigo
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f8fafc"
+textColor = "#0f172a"
+
+# Font
+font = "sans serif"
+
+[server]
+# Server settings
+maxUploadSize = 200  # Max upload size in MB
+enableXsrfProtection = true
+enableCORS = false
+
+[browser]
+# Browser settings
+gatherUsageStats = false
+
+[runner]
+# Runner settings
+magicEnabled = true
+fastReruns = true
