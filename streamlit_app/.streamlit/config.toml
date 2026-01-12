@@ -3,13 +3,13 @@
 
 [theme]
 # Primary colors - Modern blue-purple gradient
-primaryColor = "#6366f1"  # Modern indigo
+primaryColor = "#6366f1"
 backgroundColor = "#ffffff"
 secondaryBackgroundColor = "#f8fafc"
 textColor = "#0f172a"
-
-# Font
 font = "sans serif"
+
+# Note: Sidebar uses secondaryBackgroundColor automatically
 
 [server]
 # Server settings
