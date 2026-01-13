@@ -73,7 +73,7 @@ class AdobeCredentialsManager:
                 self.credentials_pool = list(st.secrets['adobe_credentials'])
                 print(f"✅ Loaded {len(self.credentials_pool)} Adobe credential set(s) from Streamlit secrets")
                 return
-        except (ImportError, AttributeError, KeyError):
+        except Exception:
             pass  # Streamlit not available or no secrets configured
 
         # Priority 2: Try to load from file (for local development)
