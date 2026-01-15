@@ -12,10 +12,10 @@ from auth.client import get_user, is_authenticated
 
 def require_auth(redirect_to_login: bool = True) -> bool:
     """
-    Check if user is authenticated. If not, optionally redirect to login.
+    Check if user is authenticated. If not, automatically redirect to login.
 
     Args:
-        redirect_to_login: Whether to show login prompt if not authenticated
+        redirect_to_login: Whether to redirect to login if not authenticated
 
     Returns:
         True if authenticated, False otherwise
@@ -24,14 +24,8 @@ def require_auth(redirect_to_login: bool = True) -> bool:
         return True
 
     if redirect_to_login:
-        st.warning("🔐 Please sign in to access this page")
-
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            if st.button("Go to Login", type="primary", use_container_width=True):
-                st.switch_page("pages/0_🔐_Login.py")
-
-        st.stop()
+        # Automatic redirect to login page
+        st.switch_page("pages/0_🔐_Login.py")
 
     return False
 
