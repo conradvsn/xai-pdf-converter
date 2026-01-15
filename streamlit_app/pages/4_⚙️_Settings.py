@@ -266,13 +266,8 @@ with col1:
 with col2:
     st.markdown("**Application Info**")
 
-    st.write("**Version:** 2.0.0 (Streamlit)")
+    st.write("**Version:** 2.0.0")
     st.write("**Author:** Conrad Vaslin")
-    st.write("**Purpose:** xAI Finance Tutor")
-
-    st.markdown("**Paths**")
-    st.code(f"Home: {Path.home()}")
-    st.code(f"App: {Path(__file__).parent.parent.parent}")
 
 st.markdown("---")
 
