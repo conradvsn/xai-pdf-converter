@@ -28,6 +28,26 @@ from auth.ui import show_login_page
 from auth.client import handle_magic_link_callback
 
 # Handle magic link callback (when user clicks link in email)
+# Supabase puts tokens in URL fragment (#), we need JavaScript to capture them
+st.markdown("""
+<script>
+    // Check if we have tokens in the URL hash
+    if (window.location.hash) {
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+
+        if (accessToken) {
+            // Redirect with tokens as query params so Streamlit can read them
+            const newUrl = window.location.pathname + '?access_token=' + accessToken + '&refresh_token=' + (refreshToken || '');
+            window.location.href = newUrl;
+        }
+    }
+</script>
+""", unsafe_allow_html=True)
+
+# Now check query params (after redirect from above script)
 if handle_magic_link_callback():
     st.success("Successfully signed in!")
     st.switch_page("Home.py")
