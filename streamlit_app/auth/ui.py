@@ -125,17 +125,40 @@ def show_login_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # Tabs for Login / Sign Up
-    tab_login, tab_signup, tab_reset = st.tabs(["Sign In", "Create Account", "Reset Password"])
+    # Check which view to show
+    if 'auth_view' not in st.session_state:
+        st.session_state.auth_view = 'login'
 
-    with tab_login:
+    if st.session_state.auth_view == 'login':
         _show_login_form()
 
-    with tab_signup:
+        # Links
+        st.markdown("---")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Create Account", use_container_width=True):
+                st.session_state.auth_view = 'signup'
+                st.rerun()
+        with col2:
+            if st.button("Forgot Password?", use_container_width=True):
+                st.session_state.auth_view = 'reset'
+                st.rerun()
+
+    elif st.session_state.auth_view == 'signup':
         _show_signup_form()
 
-    with tab_reset:
+        st.markdown("---")
+        if st.button("← Back to Sign In", use_container_width=True):
+            st.session_state.auth_view = 'login'
+            st.rerun()
+
+    elif st.session_state.auth_view == 'reset':
         _show_reset_form()
+
+        st.markdown("---")
+        if st.button("← Back to Sign In", use_container_width=True):
+            st.session_state.auth_view = 'login'
+            st.rerun()
 
 
 def _show_login_form():
