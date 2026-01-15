@@ -28,6 +28,10 @@ apply_global_styles()
 # Initialize session state
 init_session_state()
 
+# Import and show user menu (optional on home page)
+from auth.ui import show_user_menu
+show_user_menu()
+
 # Show Adobe quota in sidebar
 show_adobe_quota_sidebar()
 

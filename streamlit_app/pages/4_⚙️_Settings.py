@@ -9,6 +9,7 @@ import json
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from utils.session import init_session_state, update_setting, get_setting
 from utils.adapter import ADOBE_API_CREDENTIALS, add_adobe_credential, get_adobe_credentials, reload_credentials
@@ -26,6 +27,17 @@ apply_global_styles()
 
 # Initialize session
 init_session_state()
+
+# Import auth after page config
+from auth.middleware import require_auth
+from auth.ui import show_user_menu
+
+# Require authentication
+if not require_auth():
+    st.stop()
+
+# Show user menu in sidebar
+show_user_menu()
 
 # IMPORTANT: Force reload credentials from Streamlit secrets
 # This ensures credentials are loaded even if module was imported before Streamlit initialized

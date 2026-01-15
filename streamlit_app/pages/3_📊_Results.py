@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from utils.session import init_session_state, get_history, clear_history, get_stats
 from components.stats_cards import show_recent_activity
@@ -27,6 +28,17 @@ apply_global_styles()
 
 # Initialize session
 init_session_state()
+
+# Import auth after page config
+from auth.middleware import require_auth
+from auth.ui import show_user_menu
+
+# Require authentication
+if not require_auth():
+    st.stop()
+
+# Show user menu in sidebar
+show_user_menu()
 
 # Modern header
 st.markdown("""
