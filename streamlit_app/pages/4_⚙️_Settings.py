@@ -224,37 +224,37 @@ with col1:
     try:
         import PyPDF2
         dependencies['PyPDF2'] = True
-    except:
+    except ImportError:
         pass
 
     try:
         import spacy
         dependencies['spaCy'] = True
-    except:
+    except ImportError:
         pass
 
     try:
         import openpyxl
         dependencies['openpyxl'] = True
-    except:
+    except ImportError:
         pass
 
     try:
         from docx import Document
         dependencies['python-docx'] = True
-    except:
+    except ImportError:
         pass
 
     try:
         from adobe.pdfservices.operation.pdf_services import PDFServices
         dependencies['Adobe PDF Services'] = True
-    except:
+    except ImportError:
         pass
 
     try:
         from PIL import Image
         dependencies['Pillow'] = True
-    except:
+    except ImportError:
         pass
 
     for lib, installed in dependencies.items():

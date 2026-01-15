@@ -6,7 +6,7 @@ Author: Conrad Vaslin - xAI Finance Tutor
 """
 
 # VERSION FOR DEBUGGING STREAMLIT CLOUD CACHE ISSUES
-DETECTOR_VERSION = "2026-01-09-NO-SPACY-FILTERS"
+DETECTOR_VERSION = "2025-01-15-PRODUCTION"
 
 import re
 from pathlib import Path

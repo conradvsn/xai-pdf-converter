@@ -11,7 +11,8 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from utils.session import init_session_state
-from components.stats_cards import show_stats_dashboard
+from components.stats_cards import show_stats_dashboard, show_adobe_quota_sidebar
+from utils.styles import apply_global_styles
 
 # Page config
 st.set_page_config(
@@ -21,159 +22,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for modern, professional design
-st.markdown("""
-<style>
-    /* Global styles */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-    * {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
-
-    /* Main header styling - Modern gradient */
-    .main-header {
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
-        padding: 3rem 2rem;
-        border-radius: 16px;
-        color: white;
-        margin-bottom: 2rem;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .main-header::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.1) 75%);
-        background-size: 20px 20px;
-        opacity: 0.3;
-    }
-
-    .main-header h1 {
-        font-weight: 700;
-        font-size: 2.5rem;
-        margin-bottom: 0.5rem;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    /* Card styling - Modern glass morphism */
-    .info-card {
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(10px);
-        padding: 1.5rem;
-        border-radius: 12px;
-        border: 1px solid rgba(99, 102, 241, 0.1);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        margin-bottom: 1rem;
-        transition: all 0.3s ease;
-    }
-
-    .info-card:hover {
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        transform: translateY(-2px);
-    }
-
-    /* Feature card - Enhanced design */
-    .feature-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        padding: 2rem 1.5rem;
-        border-radius: 16px;
-        text-align: center;
-        height: 100%;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid #e2e8f0;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .feature-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #6366f1, #8b5cf6, #d946ef);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .feature-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        border-color: #6366f1;
-    }
-
-    .feature-card:hover::before {
-        opacity: 1;
-    }
-
-    /* Stats metric - Modern cards */
-    [data-testid="stMetricValue"] {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #6366f1;
-    }
-
-    [data-testid="stMetricLabel"] {
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-
-    /* Button styling - Modern gradient buttons */
-    .stButton > button {
-        width: 100%;
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-        color: white;
-        border-radius: 12px;
-        padding: 0.75rem 1.5rem;
-        border: none;
-        font-weight: 600;
-        font-size: 1rem;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
-    }
-
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
-        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    }
-
-    .stButton > button:active {
-        transform: translateY(0);
-    }
-
-    /* Progress bar */
-    .stProgress > div > div > div > div {
-        background: linear-gradient(90deg, #6366f1, #8b5cf6, #d946ef);
-    }
-
-    /* Hide Streamlit branding */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-
-    /* Custom divider */
-    .custom-divider {
-        height: 1px;
-        background: linear-gradient(90deg, transparent, #6366f1, transparent);
-        margin: 2rem 0;
-        border-radius: 2px;
-    }
-</style>
-""", unsafe_allow_html=True)
+# Apply shared global styles
+apply_global_styles()
 
 # Initialize session state
 init_session_state()
+
+# Show Adobe quota in sidebar
+show_adobe_quota_sidebar()
 
 # Header
 st.markdown("""

@@ -12,8 +12,60 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 try:
     from utils.adapter import ADOBE_API_CREDENTIALS
     adobe_keys_count = len(ADOBE_API_CREDENTIALS)
-except:
+except Exception:
     adobe_keys_count = 0
+
+
+def get_adobe_quota_info():
+    """Get Adobe API quota information from credentials manager"""
+    try:
+        from src.adobe_credentials_manager import get_credentials_manager
+        manager = get_credentials_manager()
+        summary = manager.get_usage_summary()
+
+        total_used = sum(data['used'] for data in summary.values())
+        total_limit = sum(data['limit'] for data in summary.values())
+        total_remaining = total_limit - total_used
+        percentage = (total_used / total_limit * 100) if total_limit > 0 else 0
+
+        return {
+            'used': total_used,
+            'limit': total_limit,
+            'remaining': total_remaining,
+            'percentage': percentage,
+            'accounts': summary
+        }
+    except Exception:
+        return None
+
+
+def show_adobe_quota_sidebar():
+    """Display Adobe API quota in sidebar"""
+    quota = get_adobe_quota_info()
+
+    if quota is None:
+        st.sidebar.warning("⚠️ Quota Adobe non disponible")
+        return
+
+    st.sidebar.markdown("### 📊 Quota Adobe API")
+
+    # Progress bar
+    progress = quota['percentage'] / 100
+    if progress > 0.9:
+        st.sidebar.progress(progress, text=f"🔴 {quota['used']}/{quota['limit']}")
+    elif progress > 0.7:
+        st.sidebar.progress(progress, text=f"🟡 {quota['used']}/{quota['limit']}")
+    else:
+        st.sidebar.progress(progress, text=f"🟢 {quota['used']}/{quota['limit']}")
+
+    st.sidebar.caption(f"Restant: **{quota['remaining']}** conversions ce mois")
+
+    # Show per-account breakdown
+    with st.sidebar.expander("Détails par compte"):
+        for account_name, data in quota['accounts'].items():
+            pct = data['percentage']
+            icon = "🔴" if pct >= 90 else "🟡" if pct >= 70 else "🟢"
+            st.write(f"{icon} **{account_name}**: {data['used']}/{data['limit']}")
 
 def show_stats_dashboard():
     """Display main statistics dashboard"""

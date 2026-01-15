@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 # Use adapter for compatibility
 from utils.adapter import PDFConverter, ADOBE_API_CREDENTIALS
 from utils.session import init_session_state, add_to_history, update_stats, save_result
-from components.stats_cards import show_processing_stats
+from components.stats_cards import show_processing_stats, show_adobe_quota_sidebar
 from utils.styles import apply_global_styles
 
 # Page config
@@ -29,6 +29,9 @@ apply_global_styles()
 
 # Initialize session
 init_session_state()
+
+# Show Adobe quota in sidebar
+show_adobe_quota_sidebar()
 
 # Modern header
 st.markdown("""

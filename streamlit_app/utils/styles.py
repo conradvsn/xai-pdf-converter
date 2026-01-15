@@ -16,6 +16,97 @@ GLOBAL_STYLES = """
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
 
+    /* Main header styling - Modern gradient */
+    .main-header {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+        padding: 3rem 2rem;
+        border-radius: 16px;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .main-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.1) 75%);
+        background-size: 20px 20px;
+        opacity: 0.3;
+    }
+
+    .main-header h1 {
+        font-weight: 700;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Feature card - Enhanced design */
+    .feature-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        padding: 2rem 1.5rem;
+        border-radius: 16px;
+        text-align: center;
+        height: 100%;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid #e2e8f0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #6366f1, #8b5cf6, #d946ef);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border-color: #6366f1;
+    }
+
+    .feature-card:hover::before {
+        opacity: 1;
+    }
+
+    /* Custom divider */
+    .custom-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #6366f1, transparent);
+        margin: 2rem 0;
+        border-radius: 2px;
+    }
+
+    /* Info card styling */
+    .info-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid rgba(99, 102, 241, 0.1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .info-card:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        transform: translateY(-2px);
+    }
+
     /* Modern header with gradient */
     .page-header {
         background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);

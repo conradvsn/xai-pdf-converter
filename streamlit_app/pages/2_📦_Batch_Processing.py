@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 # Use adapter for compatibility
 from utils.adapter import PDFConverter, ADOBE_API_CREDENTIALS
 from utils.session import init_session_state, add_to_history, update_stats
-from components.stats_cards import show_processing_stats
+from components.stats_cards import show_processing_stats, show_adobe_quota_sidebar
 from utils.styles import apply_global_styles
 
 # Page config
@@ -30,6 +30,9 @@ apply_global_styles()
 
 # Initialize session
 init_session_state()
+
+# Show Adobe quota in sidebar
+show_adobe_quota_sidebar()
 
 # Modern header
 st.markdown("""
@@ -149,22 +152,43 @@ if uploaded_files:
                 progress_bar = st.progress(0)
                 status_text = st.empty()
                 current_file = st.empty()
+                stats_row = st.empty()
 
                 # Processing options
                 do_conversion = operation in ["Convert Only", "Convert + Analyze"]
                 do_analysis = operation in ["Analyze Only", "Convert + Analyze"]
 
-                # Create a callback to update progress
-                processed_count = [0]  # Use list for mutable counter
+                # Real-time stats tracking
+                processed_count = [0]
+                running_findings = [0]
+                file_times = []
 
                 def update_progress():
                     processed_count[0] += 1
                     progress = processed_count[0] / len(pdf_paths)
                     progress_bar.progress(progress)
-                    status_text.text(f"Processing: {processed_count[0]}/{len(pdf_paths)} files")
 
-                # Process batch (simplified - would need to modify batch_processor to accept callback)
-                status_text.text("Starting batch processing...")
+                    # Calculate estimated time remaining
+                    if file_times:
+                        avg_time = sum(file_times) / len(file_times)
+                        remaining_files = len(pdf_paths) - processed_count[0]
+                        eta_seconds = avg_time * remaining_files
+                        eta_str = f"~{eta_seconds:.0f}s restant" if eta_seconds > 0 else "Finalisation..."
+                    else:
+                        eta_str = "Calcul..."
+
+                    status_text.text(f"📊 {processed_count[0]}/{len(pdf_paths)} fichiers | {eta_str}")
+
+                    # Update real-time stats
+                    stats_row.markdown(f"""
+                    <div style="background: #f0f4ff; padding: 0.75rem 1rem; border-radius: 8px; display: flex; gap: 2rem;">
+                        <span>🔍 <strong>{running_findings[0]}</strong> détections</span>
+                        <span>✅ <strong>{processed_count[0]}</strong> traités</span>
+                        <span>⏳ <strong>{len(pdf_paths) - processed_count[0]}</strong> en attente</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                status_text.text("🚀 Démarrage du traitement...")
 
                 # PDFConverter already imported from utils.adapter at top of file
 
@@ -189,7 +213,8 @@ if uploaded_files:
 
                 # Process each PDF
                 for idx, pdf_path in enumerate(pdf_paths):
-                    current_file.text(f"📄 Processing: {pdf_path.name}")
+                    file_start_time = time.time()
+                    current_file.markdown(f"📄 **En cours:** `{pdf_path.name}`")
 
                     try:
                         # Conversion
@@ -230,10 +255,16 @@ if uploaded_files:
                             results['total_findings'] += total_findings
                             results['total_pages'] += len(converter.sensitive_info_by_page)
 
+                            # Update running findings count for real-time display
+                            running_findings[0] += total_findings
+
                         results['successful'].append(pdf_path.name)
 
                     except Exception as e:
                         results['failed'].append({'file': pdf_path.name, 'error': str(e)})
+
+                    # Track file processing time for ETA calculation
+                    file_times.append(time.time() - file_start_time)
 
                     # Update progress
                     update_progress()
