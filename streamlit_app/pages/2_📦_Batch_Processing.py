@@ -11,7 +11,6 @@ from typing import List
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Use adapter for compatibility
 from utils.adapter import PDFConverter, ADOBE_API_CREDENTIALS
@@ -31,17 +30,6 @@ apply_global_styles()
 
 # Initialize session
 init_session_state()
-
-# Import auth after page config
-from auth.middleware import require_auth
-from auth.ui import show_user_menu
-
-# Require authentication
-if not require_auth():
-    st.stop()
-
-# Show user menu in sidebar
-show_user_menu()
 
 # Show Adobe quota in sidebar
 show_adobe_quota_sidebar()
