@@ -28,8 +28,15 @@ apply_global_styles()
 # Initialize session state
 init_session_state()
 
-# Import and show user menu (optional on home page)
+# Import auth and require authentication
+from auth.middleware import require_auth
 from auth.ui import show_user_menu
+
+# Require authentication - redirect to login if not signed in
+if not require_auth():
+    st.stop()
+
+# Show user menu in sidebar
 show_user_menu()
 
 # Show Adobe quota in sidebar
