@@ -276,6 +276,58 @@ with col2:
 
 st.markdown("---")
 
+# Cloud Storage Settings
+st.markdown("### ☁️ Cloud Storage (Supabase)")
+
+try:
+    from utils.cloud_storage import is_cloud_storage_available
+    cloud_connected = is_cloud_storage_available()
+except Exception:
+    cloud_connected = False
+
+if cloud_connected:
+    st.success("✅ Supabase connected - Usage tracking is persistent")
+else:
+    st.info("""
+    **Enable Persistent Tracking with Supabase (Free)**
+
+    1. Create a free account at [supabase.com](https://supabase.com)
+    2. Create a new project
+    3. Create these tables in SQL Editor:
+
+    ```sql
+    -- Usage tracking table
+    CREATE TABLE adobe_usage (
+        id SERIAL PRIMARY KEY,
+        account_name TEXT NOT NULL,
+        month TEXT NOT NULL,
+        count INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(account_name, month)
+    );
+
+    -- Optional: Credentials table (more secure than secrets.toml)
+    CREATE TABLE adobe_credentials (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        client_id TEXT NOT NULL,
+        client_secret TEXT NOT NULL,
+        monthly_limit INTEGER DEFAULT 500,
+        created_at TIMESTAMP DEFAULT NOW()
+    );
+    ```
+
+    4. Add to Streamlit secrets:
+    ```toml
+    [supabase]
+    url = "https://your-project.supabase.co"
+    key = "your-anon-key"
+    ```
+    """)
+
+st.markdown("---")
+
 # Advanced Settings
 with st.expander("🔬 Advanced Settings"):
     st.markdown("### ⚠️ Advanced Configuration")

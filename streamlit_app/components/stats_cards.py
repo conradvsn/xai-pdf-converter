@@ -17,8 +17,49 @@ except Exception:
 
 
 def get_adobe_quota_info():
-    """Get Adobe API quota information from credentials manager"""
+    """Get Adobe API quota information from credentials manager or cloud storage"""
     try:
+        # Try cloud storage first (for Streamlit Cloud)
+        try:
+            from utils.cloud_storage import get_cloud_storage, is_cloud_storage_available
+            if is_cloud_storage_available():
+                storage = get_cloud_storage()
+                cloud_usage = storage.get_all_usage()
+
+                # Get credentials info
+                from utils.adapter import get_adobe_credentials
+                credentials = get_adobe_credentials()
+
+                if credentials:
+                    summary = {}
+                    for cred in credentials:
+                        name = cred.get('name', 'default')
+                        limit = cred.get('monthly_limit', 500)
+                        usage_data = cloud_usage.get(name, {'count': 0})
+                        used = usage_data.get('count', 0)
+
+                        summary[name] = {
+                            'used': used,
+                            'limit': limit,
+                            'remaining': limit - used,
+                            'percentage': (used / limit * 100) if limit > 0 else 0
+                        }
+
+                    total_used = sum(data['used'] for data in summary.values())
+                    total_limit = sum(data['limit'] for data in summary.values())
+
+                    return {
+                        'used': total_used,
+                        'limit': total_limit,
+                        'remaining': total_limit - total_used,
+                        'percentage': (total_used / total_limit * 100) if total_limit > 0 else 0,
+                        'accounts': summary,
+                        'source': 'cloud'
+                    }
+        except Exception:
+            pass  # Fall back to local storage
+
+        # Fall back to local credentials manager
         from src.adobe_credentials_manager import get_credentials_manager
         manager = get_credentials_manager()
         summary = manager.get_usage_summary()
@@ -33,7 +74,8 @@ def get_adobe_quota_info():
             'limit': total_limit,
             'remaining': total_remaining,
             'percentage': percentage,
-            'accounts': summary
+            'accounts': summary,
+            'source': 'local'
         }
     except Exception:
         return None
@@ -53,18 +95,21 @@ def show_adobe_quota_sidebar():
     quota = get_adobe_quota_info()
 
     if quota is None:
-        st.sidebar.warning("⚠️ Quota Adobe non disponible")
+        st.sidebar.warning("⚠️ Adobe quota unavailable")
         return
 
-    st.sidebar.markdown("### 📊 Quota Adobe API")
+    st.sidebar.markdown("### 📊 Adobe API Quota")
 
-    # On cloud, usage tracking is not persistent
-    if is_cloud and quota['used'] == 0:
-        st.sidebar.info(f"☁️ {len(quota['accounts'])} compte(s) configuré(s)")
-        st.sidebar.caption("Le tracking de quota n'est pas persistant sur Streamlit Cloud")
-        with st.sidebar.expander("Comptes disponibles"):
+    # Check if using cloud storage
+    is_cloud_storage = quota.get('source') == 'cloud'
+
+    # On cloud without cloud storage, show setup message
+    if is_cloud and not is_cloud_storage and quota['used'] == 0:
+        st.sidebar.info(f"☁️ {len(quota['accounts'])} account(s) configured")
+        st.sidebar.caption("Set up Supabase for persistent tracking")
+        with st.sidebar.expander("Available accounts"):
             for account_name, data in quota['accounts'].items():
-                st.write(f"✅ **{account_name}**: {data['limit']}/mois")
+                st.write(f"✅ **{account_name}**: {data['limit']}/month")
         return
 
     # Progress bar
@@ -76,10 +121,14 @@ def show_adobe_quota_sidebar():
     else:
         st.sidebar.progress(progress, text=f"🟢 {quota['used']}/{quota['limit']}")
 
-    st.sidebar.caption(f"Restant: **{quota['remaining']}** conversions ce mois")
+    # Show source indicator
+    if is_cloud_storage:
+        st.sidebar.caption(f"☁️ **{quota['remaining']}** remaining (cloud sync)")
+    else:
+        st.sidebar.caption(f"💾 **{quota['remaining']}** remaining (local)")
 
     # Show per-account breakdown
-    with st.sidebar.expander("Détails par compte"):
+    with st.sidebar.expander("Account details"):
         for account_name, data in quota['accounts'].items():
             pct = data['percentage']
             icon = "🔴" if pct >= 90 else "🟡" if pct >= 70 else "🟢"

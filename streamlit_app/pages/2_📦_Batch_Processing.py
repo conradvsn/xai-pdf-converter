@@ -173,22 +173,22 @@ if uploaded_files:
                         avg_time = sum(file_times) / len(file_times)
                         remaining_files = len(pdf_paths) - processed_count[0]
                         eta_seconds = avg_time * remaining_files
-                        eta_str = f"~{eta_seconds:.0f}s restant" if eta_seconds > 0 else "Finalisation..."
+                        eta_str = f"~{eta_seconds:.0f}s remaining" if eta_seconds > 0 else "Finalizing..."
                     else:
-                        eta_str = "Calcul..."
+                        eta_str = "Calculating..."
 
-                    status_text.text(f"📊 {processed_count[0]}/{len(pdf_paths)} fichiers | {eta_str}")
+                    status_text.text(f"📊 {processed_count[0]}/{len(pdf_paths)} files | {eta_str}")
 
                     # Update real-time stats
                     stats_row.markdown(f"""
                     <div style="background: #f0f4ff; padding: 0.75rem 1rem; border-radius: 8px; display: flex; gap: 2rem;">
-                        <span>🔍 <strong>{running_findings[0]}</strong> détections</span>
-                        <span>✅ <strong>{processed_count[0]}</strong> traités</span>
-                        <span>⏳ <strong>{len(pdf_paths) - processed_count[0]}</strong> en attente</span>
+                        <span>🔍 <strong>{running_findings[0]}</strong> findings</span>
+                        <span>✅ <strong>{processed_count[0]}</strong> processed</span>
+                        <span>⏳ <strong>{len(pdf_paths) - processed_count[0]}</strong> pending</span>
                     </div>
                     """, unsafe_allow_html=True)
 
-                status_text.text("🚀 Démarrage du traitement...")
+                status_text.text("🚀 Starting batch processing...")
 
                 # PDFConverter already imported from utils.adapter at top of file
 
@@ -214,7 +214,7 @@ if uploaded_files:
                 # Process each PDF
                 for idx, pdf_path in enumerate(pdf_paths):
                     file_start_time = time.time()
-                    current_file.markdown(f"📄 **En cours:** `{pdf_path.name}`")
+                    current_file.markdown(f"📄 **Processing:** `{pdf_path.name}`")
 
                     try:
                         # Conversion

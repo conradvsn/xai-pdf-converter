@@ -18,3 +18,6 @@ pdfservices-sdk>=4.0.0
 # Additional Streamlit-specific
 plotly>=5.17.0  # For interactive charts
 streamlit-option-menu>=0.3.6  # Enhanced navigation
+
+# Cloud storage for persistent tracking
+supabase>=2.0.0

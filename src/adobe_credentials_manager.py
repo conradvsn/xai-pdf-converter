@@ -215,6 +215,15 @@ class AdobeCredentialsManager:
         self.usage_data[cred_name]['count'] += 1
         self._save_usage_tracking()
 
+        # Also record to cloud storage if available (for Streamlit Cloud)
+        try:
+            from streamlit_app.utils.cloud_storage import get_cloud_storage, is_cloud_storage_available
+            if is_cloud_storage_available():
+                storage = get_cloud_storage()
+                storage.record_usage(cred_name)
+        except Exception:
+            pass  # Cloud storage not available, local tracking is sufficient
+
     def _rotate_to_next(self):
         """
         Rotate to next credential in pool
