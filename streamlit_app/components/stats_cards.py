@@ -41,6 +41,15 @@ def get_adobe_quota_info():
 
 def show_adobe_quota_sidebar():
     """Display Adobe API quota in sidebar"""
+    import os
+
+    # Check if running on Streamlit Cloud
+    is_cloud = (
+        os.getenv('STREAMLIT_RUNTIME_ENVIRONMENT') == 'cloud' or
+        os.path.exists('/mount/src') or
+        os.path.exists('/home/appuser')
+    )
+
     quota = get_adobe_quota_info()
 
     if quota is None:
@@ -48,6 +57,15 @@ def show_adobe_quota_sidebar():
         return
 
     st.sidebar.markdown("### 📊 Quota Adobe API")
+
+    # On cloud, usage tracking is not persistent
+    if is_cloud and quota['used'] == 0:
+        st.sidebar.info(f"☁️ {len(quota['accounts'])} compte(s) configuré(s)")
+        st.sidebar.caption("Le tracking de quota n'est pas persistant sur Streamlit Cloud")
+        with st.sidebar.expander("Comptes disponibles"):
+            for account_name, data in quota['accounts'].items():
+                st.write(f"✅ **{account_name}**: {data['limit']}/mois")
+        return
 
     # Progress bar
     progress = quota['percentage'] / 100
