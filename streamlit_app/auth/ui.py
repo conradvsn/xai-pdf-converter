@@ -10,6 +10,7 @@ import re
 from auth.client import (
     sign_up,
     sign_in,
+    sign_in_with_google,
     sign_out,
     reset_password,
     get_user,
@@ -141,6 +142,24 @@ def show_login_page():
 def _show_login_form():
     """Display login form"""
 
+    # Google Sign-In button
+    if st.button("🔵 Continue with Google", use_container_width=True, type="secondary"):
+        with st.spinner("Connecting to Google..."):
+            success, message, auth_url = sign_in_with_google()
+
+        if success and auth_url:
+            st.markdown(f'<meta http-equiv="refresh" content="0;url={auth_url}">', unsafe_allow_html=True)
+            st.info("Redirecting to Google...")
+        else:
+            st.error(message)
+
+    # Divider
+    st.markdown("""
+    <div class="divider">
+        <span>or continue with email</span>
+    </div>
+    """, unsafe_allow_html=True)
+
     with st.form("login_form", clear_on_submit=False):
         email = st.text_input(
             "Email",
@@ -180,6 +199,24 @@ def _show_login_form():
 
 def _show_signup_form():
     """Display signup form"""
+
+    # Google Sign-Up button
+    if st.button("🔵 Sign up with Google", use_container_width=True, type="secondary", key="google_signup"):
+        with st.spinner("Connecting to Google..."):
+            success, message, auth_url = sign_in_with_google()
+
+        if success and auth_url:
+            st.markdown(f'<meta http-equiv="refresh" content="0;url={auth_url}">', unsafe_allow_html=True)
+            st.info("Redirecting to Google...")
+        else:
+            st.error(message)
+
+    # Divider
+    st.markdown("""
+    <div class="divider">
+        <span>or sign up with email</span>
+    </div>
+    """, unsafe_allow_html=True)
 
     with st.form("signup_form", clear_on_submit=False):
         full_name = st.text_input(
