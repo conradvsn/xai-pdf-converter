@@ -8,10 +8,8 @@ from typing import Optional
 import re
 
 from auth.client import (
-    sign_up,
-    sign_in,
+    sign_in_with_magic_link,
     sign_out,
-    reset_password,
     get_user,
     is_authenticated,
     get_user_profile
@@ -22,13 +20,6 @@ def validate_email(email: str) -> bool:
     """Validate email format"""
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
-
-
-def validate_password(password: str) -> tuple[bool, str]:
-    """Validate password strength"""
-    if len(password) < 6:
-        return False, "Password must be at least 6 characters"
-    return True, ""
 
 
 def show_login_page():
@@ -125,154 +116,21 @@ def show_login_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # Check which view to show
-    if 'auth_view' not in st.session_state:
-        st.session_state.auth_view = 'login'
-
-    if st.session_state.auth_view == 'login':
-        _show_login_form()
-
-        # Links
-        st.markdown("---")
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Create Account", use_container_width=True):
-                st.session_state.auth_view = 'signup'
-                st.rerun()
-        with col2:
-            if st.button("Forgot Password?", use_container_width=True):
-                st.session_state.auth_view = 'reset'
-                st.rerun()
-
-    elif st.session_state.auth_view == 'signup':
-        _show_signup_form()
-
-        st.markdown("---")
-        if st.button("← Back to Sign In", use_container_width=True):
-            st.session_state.auth_view = 'login'
-            st.rerun()
-
-    elif st.session_state.auth_view == 'reset':
-        _show_reset_form()
-
-        st.markdown("---")
-        if st.button("← Back to Sign In", use_container_width=True):
-            st.session_state.auth_view = 'login'
-            st.rerun()
+    # Simple magic link form
+    _show_magic_link_form()
 
 
-def _show_login_form():
-    """Display login form"""
+def _show_magic_link_form():
+    """Display magic link login form"""
 
-    with st.form("login_form", clear_on_submit=False):
+    with st.form("magic_link_form", clear_on_submit=False):
         email = st.text_input(
             "Email",
             placeholder="you@company.com",
             key="login_email"
         )
 
-        password = st.text_input(
-            "Password",
-            type="password",
-            placeholder="Enter your password",
-            key="login_password"
-        )
-
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            remember = st.checkbox("Remember me", value=True)
-
-        submitted = st.form_submit_button("Sign In", type="primary", use_container_width=True)
-
-        if submitted:
-            if not email or not password:
-                st.error("Please fill in all fields")
-            elif not validate_email(email):
-                st.error("Please enter a valid email address")
-            else:
-                with st.spinner("Signing in..."):
-                    success, message = sign_in(email, password)
-
-                if success:
-                    st.success(message)
-                    st.balloons()
-                    st.rerun()
-                else:
-                    st.error(message)
-
-
-def _show_signup_form():
-    """Display signup form"""
-
-    with st.form("signup_form", clear_on_submit=False):
-        full_name = st.text_input(
-            "Full Name",
-            placeholder="John Doe",
-            key="signup_name"
-        )
-
-        email = st.text_input(
-            "Email",
-            placeholder="you@company.com",
-            key="signup_email"
-        )
-
-        password = st.text_input(
-            "Password",
-            type="password",
-            placeholder="Min. 6 characters",
-            key="signup_password"
-        )
-
-        confirm_password = st.text_input(
-            "Confirm Password",
-            type="password",
-            placeholder="Confirm your password",
-            key="signup_confirm"
-        )
-
-        terms = st.checkbox("I agree to the Terms of Service and Privacy Policy")
-
-        submitted = st.form_submit_button("Create Account", type="primary", use_container_width=True)
-
-        if submitted:
-            # Validation
-            if not all([full_name, email, password, confirm_password]):
-                st.error("Please fill in all fields")
-            elif not validate_email(email):
-                st.error("Please enter a valid email address")
-            elif password != confirm_password:
-                st.error("Passwords do not match")
-            elif not terms:
-                st.error("Please accept the Terms of Service")
-            else:
-                valid, msg = validate_password(password)
-                if not valid:
-                    st.error(msg)
-                else:
-                    with st.spinner("Creating account..."):
-                        success, message = sign_up(email, password, full_name)
-
-                    if success:
-                        st.success(message)
-                        st.info("📧 Check your email to verify your account, then sign in.")
-                    else:
-                        st.error(message)
-
-
-def _show_reset_form():
-    """Display password reset form"""
-
-    st.markdown("Enter your email to receive a password reset link.")
-
-    with st.form("reset_form", clear_on_submit=True):
-        email = st.text_input(
-            "Email",
-            placeholder="you@company.com",
-            key="reset_email"
-        )
-
-        submitted = st.form_submit_button("Send Reset Link", type="primary", use_container_width=True)
+        submitted = st.form_submit_button("Send Sign-In Link", type="primary", use_container_width=True)
 
         if submitted:
             if not email:
@@ -280,11 +138,12 @@ def _show_reset_form():
             elif not validate_email(email):
                 st.error("Please enter a valid email address")
             else:
-                with st.spinner("Sending reset link..."):
-                    success, message = reset_password(email)
+                with st.spinner("Sending link..."):
+                    success, message = sign_in_with_magic_link(email)
 
                 if success:
                     st.success(message)
+                    st.info("Check your inbox and click the link to sign in.")
                 else:
                     st.error(message)
 

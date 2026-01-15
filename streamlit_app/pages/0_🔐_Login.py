@@ -25,6 +25,12 @@ apply_global_styles()
 
 # Import auth after page config
 from auth.ui import show_login_page
+from auth.client import handle_magic_link_callback
+
+# Handle magic link callback (when user clicks link in email)
+if handle_magic_link_callback():
+    st.success("Successfully signed in!")
+    st.switch_page("Home.py")
 
 # Hide sidebar on login page
 st.markdown("""

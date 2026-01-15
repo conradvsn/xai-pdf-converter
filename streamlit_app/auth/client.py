@@ -96,13 +96,12 @@ def sign_up(email: str, password: str, full_name: str = "") -> Tuple[bool, str]:
             return False, f"Sign up failed: {error_msg}"
 
 
-def sign_in(email: str, password: str) -> Tuple[bool, str]:
+def sign_in_with_magic_link(email: str) -> Tuple[bool, str]:
     """
-    Sign in an existing user
+    Send a magic link to the user's email for passwordless sign-in
 
     Args:
         email: User's email
-        password: User's password
 
     Returns:
         Tuple of (success: bool, message: str)
@@ -112,34 +111,64 @@ def sign_in(email: str, password: str) -> Tuple[bool, str]:
         return False, "Authentication service unavailable"
 
     try:
-        response = client.auth.sign_in_with_password({
+        # Get redirect URL from secrets or use default
+        redirect_url = st.secrets.get('app_url', 'http://localhost:8501')
+
+        client.auth.sign_in_with_otp({
             "email": email,
-            "password": password
+            "options": {
+                "email_redirect_to": redirect_url
+            }
         })
 
-        if response.user and response.session:
-            # Store session
-            st.session_state['supabase_session'] = {
-                'access_token': response.session.access_token,
-                'refresh_token': response.session.refresh_token,
-                'user': {
-                    'id': response.user.id,
-                    'email': response.user.email,
-                    'full_name': response.user.user_metadata.get('full_name', '')
-                }
-            }
-            return True, "Signed in successfully!"
-        else:
-            return False, "Invalid credentials"
+        return True, f"Magic link sent to {email}! Check your inbox."
 
     except Exception as e:
         error_msg = str(e)
-        if "invalid" in error_msg.lower() or "credentials" in error_msg.lower():
-            return False, "Invalid email or password"
-        elif "not confirmed" in error_msg.lower():
-            return False, "Please verify your email before signing in"
-        else:
-            return False, f"Sign in failed: {error_msg}"
+        return False, f"Failed to send magic link: {error_msg}"
+
+
+def handle_magic_link_callback() -> bool:
+    """
+    Handle the magic link callback when user clicks the link in email.
+    Checks URL parameters for access_token and sets up session.
+
+    Returns:
+        True if successfully authenticated from callback, False otherwise
+    """
+    # Check if we have access_token in query params (from Supabase redirect)
+    query_params = st.query_params
+
+    access_token = query_params.get('access_token')
+    refresh_token = query_params.get('refresh_token')
+
+    if access_token:
+        client = get_supabase_client()
+        if client:
+            try:
+                # Set the session with the tokens
+                response = client.auth.set_session(access_token, refresh_token or '')
+
+                if response.user:
+                    # Store session
+                    st.session_state['supabase_session'] = {
+                        'access_token': access_token,
+                        'refresh_token': refresh_token or '',
+                        'user': {
+                            'id': response.user.id,
+                            'email': response.user.email,
+                            'full_name': response.user.user_metadata.get('full_name', '')
+                        }
+                    }
+
+                    # Clear the URL parameters
+                    st.query_params.clear()
+
+                    return True
+            except Exception:
+                pass
+
+    return False
 
 
 def sign_in_with_google() -> Tuple[bool, str, Optional[str]]:
