@@ -111,8 +111,16 @@ def sign_in_with_magic_link(email: str) -> Tuple[bool, str]:
         return False, "Authentication service unavailable"
 
     try:
-        # Get redirect URL from secrets or use default
-        redirect_url = st.secrets.get('app_url', 'http://localhost:8501')
+        # Get redirect URL from secrets or detect environment
+        try:
+            redirect_url = st.secrets['app_url']
+        except Exception:
+            # Default to Streamlit Cloud URL or localhost
+            import os
+            if os.getenv('STREAMLIT_RUNTIME_ENVIRONMENT') == 'cloud' or os.path.exists('/mount/src'):
+                redirect_url = "https://xai-pdf-converter.streamlit.app"
+            else:
+                redirect_url = "http://localhost:8501"
 
         client.auth.sign_in_with_otp({
             "email": email,
