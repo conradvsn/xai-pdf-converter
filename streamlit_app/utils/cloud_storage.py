@@ -202,6 +202,76 @@ class CloudStorage:
         except Exception as e:
             return False
 
+    def get_global_stats(self) -> Dict[str, Any]:
+        """
+        Get global statistics shared across all users.
+
+        Returns:
+            Dict with total_pdfs, total_pages, total_findings, total_companies
+        """
+        if not self.is_connected:
+            return {}
+
+        try:
+            response = self.client.table('global_stats').select('*').eq('id', 1).execute()
+
+            if response.data and len(response.data) > 0:
+                return response.data[0]
+            return {
+                'total_pdfs': 0,
+                'total_pages': 0,
+                'total_findings': 0,
+                'total_companies': 0
+            }
+
+        except Exception:
+            return {}
+
+    def update_global_stats(self, pdfs: int = 0, pages: int = 0, findings: int = 0, companies: int = 0) -> bool:
+        """
+        Update global statistics (increment values).
+
+        Args:
+            pdfs: Number of PDFs to add
+            pages: Number of pages to add
+            findings: Number of findings to add
+            companies: Number of companies to add
+
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.is_connected:
+            return False
+
+        try:
+            # Get current stats
+            current = self.get_global_stats()
+
+            new_stats = {
+                'total_pdfs': current.get('total_pdfs', 0) + pdfs,
+                'total_pages': current.get('total_pages', 0) + pages,
+                'total_findings': current.get('total_findings', 0) + findings,
+                'total_companies': current.get('total_companies', 0) + companies,
+                'updated_at': datetime.now().isoformat()
+            }
+
+            # Check if record exists
+            response = self.client.table('global_stats').select('id').eq('id', 1).execute()
+
+            if response.data and len(response.data) > 0:
+                # Update existing
+                self.client.table('global_stats').update(new_stats).eq('id', 1).execute()
+            else:
+                # Insert new
+                new_stats['id'] = 1
+                new_stats['created_at'] = datetime.now().isoformat()
+                self.client.table('global_stats').insert(new_stats).execute()
+
+            return True
+
+        except Exception:
+            return False
+
 
 # Singleton instance
 _cloud_storage: Optional[CloudStorage] = None

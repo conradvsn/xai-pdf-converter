@@ -64,13 +64,28 @@ def add_to_history(pdf_name: str, operation: str, status: str, details: dict = N
 
 def update_stats(pdfs_count: int = 0, pages_count: int = 0, findings_count: int = 0,
                 companies_count: int = 0, persons_count: int = 0):
-    """Update global statistics"""
+    """Update global statistics (both session and cloud)"""
+    # Update session state
     st.session_state.stats['total_pdfs_processed'] += pdfs_count
     st.session_state.stats['total_pages_analyzed'] += pages_count
     st.session_state.stats['total_findings'] += findings_count
     st.session_state.stats['total_companies_detected'] += companies_count
     st.session_state.stats['total_persons_detected'] += persons_count
     st.session_state.stats['last_processed'] = datetime.now()
+
+    # Also update cloud storage for global stats
+    try:
+        from utils.cloud_storage import get_cloud_storage, is_cloud_storage_available
+        if is_cloud_storage_available():
+            storage = get_cloud_storage()
+            storage.update_global_stats(
+                pdfs=pdfs_count,
+                pages=pages_count,
+                findings=findings_count,
+                companies=companies_count
+            )
+    except Exception:
+        pass  # Cloud update failed, but local stats are updated
 
 def get_stats():
     """Get current statistics"""

@@ -135,17 +135,31 @@ def show_adobe_quota_sidebar():
             st.write(f"{icon} **{account_name}**: {data['used']}/{data['limit']}")
 
 def show_stats_dashboard():
-    """Display main statistics dashboard"""
+    """Display main statistics dashboard with global cloud stats"""
 
-    # Get stats from session state
-    stats = st.session_state.get('stats', {
+    # Try to get global stats from cloud storage first
+    stats = {
         'total_pdfs_processed': 0,
         'total_pages_analyzed': 0,
         'total_findings': 0,
         'total_companies_detected': 0,
         'total_persons_detected': 0,
         'last_processed': None
-    })
+    }
+
+    try:
+        from utils.cloud_storage import get_cloud_storage, is_cloud_storage_available
+        if is_cloud_storage_available():
+            storage = get_cloud_storage()
+            cloud_stats = storage.get_global_stats()
+            if cloud_stats:
+                stats['total_pdfs_processed'] = cloud_stats.get('total_pdfs', 0)
+                stats['total_pages_analyzed'] = cloud_stats.get('total_pages', 0)
+                stats['total_findings'] = cloud_stats.get('total_findings', 0)
+                stats['total_companies_detected'] = cloud_stats.get('total_companies', 0)
+    except Exception:
+        # Fall back to session state
+        stats = st.session_state.get('stats', stats)
 
     # Create 4 columns for metrics
     col1, col2, col3, col4 = st.columns(4)
