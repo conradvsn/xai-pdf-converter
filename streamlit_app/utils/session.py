@@ -88,7 +88,26 @@ def update_stats(pdfs_count: int = 0, pages_count: int = 0, findings_count: int 
         pass  # Cloud update failed, but local stats are updated
 
 def get_stats():
-    """Get current statistics"""
+    """Get current statistics (from cloud if available, else session)"""
+    # Try cloud storage first for global stats
+    try:
+        from utils.cloud_storage import get_cloud_storage, is_cloud_storage_available
+        if is_cloud_storage_available():
+            storage = get_cloud_storage()
+            cloud_stats = storage.get_global_stats()
+            if cloud_stats:
+                return {
+                    'total_pdfs_processed': cloud_stats.get('total_pdfs', 0),
+                    'total_pages_analyzed': cloud_stats.get('total_pages', 0),
+                    'total_findings': cloud_stats.get('total_findings', 0),
+                    'total_companies_detected': cloud_stats.get('total_companies', 0),
+                    'total_persons_detected': 0,
+                    'last_processed': cloud_stats.get('updated_at')
+                }
+    except Exception:
+        pass
+
+    # Fall back to session state
     return st.session_state.stats
 
 def clear_history():
