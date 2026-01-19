@@ -94,7 +94,7 @@ def test_imports():
         'src.config': 'Configuration module',
         'src.converter': 'PDF Converter module',
         'src.batch_processor': 'Batch processor module',
-        'src.report_generator': 'Report generator module',
+        'src.analysis.report_generator': 'Report generator module',
         'src.analysis.sensitive_info_detector': 'Sensitive info detector'
     }
 
