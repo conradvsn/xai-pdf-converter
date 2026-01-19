@@ -3,6 +3,7 @@ PyPDF2>=3.0.0
 pdf2docx>=0.5.0
 python-docx>=0.8.11
 openpyxl>=3.1.0
+pdfservices-sdk>=4.0.0
 
 # Optional but recommended
 pdfplumber>=0.10.0

@@ -18,7 +18,10 @@ def test_dependencies():
         'docx': 'DOCX generation',
         'openpyxl': 'Excel generation',
         'PIL': 'Image processing',
-        'spacy': 'NLP and NER'
+        'spacy': 'NLP and NER',
+        'pdf2docx': 'PDF to DOCX conversion (fallback)',
+        'pdfplumber': 'Advanced table extraction',
+        'adobe.pdfservices.operation': 'Adobe PDF Services SDK'
     }
 
     results = {}
