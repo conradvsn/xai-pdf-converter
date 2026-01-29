@@ -13,7 +13,7 @@ import importlib
 if 'src.analysis.sensitive_info_detector' in sys.modules:
     importlib.reload(sys.modules['src.analysis.sensitive_info_detector'])
 
-from src.converter import SECPDFConverter
+from src.converter import SECPDFConverter, AdobeConversionError
 
 
 class PDFConverter:
@@ -43,16 +43,22 @@ class PDFConverter:
         self._current_converter = None
         self._original_pdf_path = None  # Store original PDF path for analysis
 
-    def convert_pdf_to_docx(self, pdf_path, output_path):
+    def convert_pdf_to_docx(self, pdf_path, output_path, allow_fallback=False):
         """
-        Convert PDF to DOCX
+        Convert PDF to DOCX using Adobe PDF Services (default).
+        If Adobe fails, raises AdobeConversionError unless allow_fallback=True.
 
         Args:
             pdf_path: Path to input PDF
             output_path: Path for output DOCX
+            allow_fallback: If True, allows fallback to pdf2docx when Adobe fails
+                           (should only be True after explicit user consent)
 
         Returns:
             Path to output DOCX file
+
+        Raises:
+            AdobeConversionError: When Adobe conversion fails and allow_fallback=False
         """
         pdf_path = Path(pdf_path)
         output_path = Path(output_path)
@@ -67,10 +73,12 @@ class PDFConverter:
             verbose=self.verbose
         )
 
-        # Convert
+        # Convert - Adobe is ALWAYS used by default
+        # If allow_fallback=False (default), will raise AdobeConversionError on failure
         converter.convert(
             use_ocr=self.use_ocr,
-            auto_detect_scanned=True
+            auto_detect_scanned=True,
+            allow_fallback=allow_fallback
         )
 
         # Store for later use

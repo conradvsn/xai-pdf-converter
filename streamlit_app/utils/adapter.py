@@ -11,7 +11,7 @@ import json
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # Import the wrapper
-from utils.converter_wrapper import PDFConverter
+from utils.converter_wrapper import PDFConverter, AdobeConversionError
 from src.config import ADOBE_PDF_AVAILABLE
 
 # Adobe API credentials management

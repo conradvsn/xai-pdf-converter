@@ -18,6 +18,9 @@ from utils.session import init_session_state, add_to_history, update_stats
 from components.stats_cards import show_processing_stats, show_adobe_quota_sidebar
 from utils.styles import apply_global_styles
 
+# Import exception for Adobe conversion errors
+from src.converter import AdobeConversionError
+
 # Page config
 st.set_page_config(
     page_title="Batch Processing - xAI PDF Converter",
@@ -211,6 +214,10 @@ if uploaded_files:
                 all_findings_by_pdf = {}
                 all_images_by_pdf = {}
 
+                # Check if user has already chosen to use fallback for batch
+                use_fallback_batch = st.session_state.get('use_pdf2docx_fallback_batch', False)
+                adobe_failed_once = False
+
                 # Process each PDF
                 for idx, pdf_path in enumerate(pdf_paths):
                     file_start_time = time.time()
@@ -220,10 +227,46 @@ if uploaded_files:
                         # Conversion
                         docx_path = None
                         if do_conversion:
-                            docx_path = converter.convert_pdf_to_docx(
-                                pdf_path,
-                                output_dir / f"{pdf_path.stem}.docx"
-                            )
+                            try:
+                                docx_path = converter.convert_pdf_to_docx(
+                                    pdf_path,
+                                    output_dir / f"{pdf_path.stem}.docx",
+                                    allow_fallback=use_fallback_batch
+                                )
+                            except AdobeConversionError as adobe_err:
+                                if not adobe_failed_once:
+                                    # First Adobe failure - ask user
+                                    adobe_failed_once = True
+                                    progress_bar.progress(0)
+                                    st.warning(f"⚠️ **Conversion Adobe échouée pour {pdf_path.name}:** {adobe_err}")
+
+                                    if adobe_err.can_fallback:
+                                        st.markdown("""
+                                        ---
+                                        ### 🔄 Option de secours pour le batch
+
+                                        La conversion Adobe a échoué. Voulez-vous utiliser **pdf2docx** pour tous les fichiers restants ?
+
+                                        **Note:** La qualité sera inférieure à Adobe.
+                                        """)
+
+                                        col_yes, col_no = st.columns(2)
+                                        with col_yes:
+                                            if st.button("✅ Oui, utiliser pdf2docx pour tout", type="primary", key="batch_fallback_yes"):
+                                                st.session_state['use_pdf2docx_fallback_batch'] = True
+                                                st.rerun()
+                                        with col_no:
+                                            if st.button("❌ Non, annuler le batch", type="secondary", key="batch_fallback_no"):
+                                                st.session_state['use_pdf2docx_fallback_batch'] = False
+                                                st.error("Batch annulé par l'utilisateur.")
+                                                st.stop()
+                                        st.stop()
+                                    else:
+                                        st.error("❌ Aucune méthode de conversion disponible.")
+                                        st.stop()
+                                else:
+                                    # Already asked, user said no or didn't choose fallback
+                                    raise
 
                         # Analysis
                         if do_analysis:
@@ -288,6 +331,10 @@ if uploaded_files:
                         st.warning(f"⚠️ Could not create consolidated report: {e}")
 
             processing_time = time.time() - start_time
+
+            # Reset fallback flag after batch processing
+            if 'use_pdf2docx_fallback_batch' in st.session_state:
+                del st.session_state['use_pdf2docx_fallback_batch']
 
             # Results
             st.markdown("---")

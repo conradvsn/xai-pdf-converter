@@ -17,6 +17,9 @@ from utils.session import init_session_state, add_to_history, update_stats, save
 from components.stats_cards import show_processing_stats, show_adobe_quota_sidebar
 from utils.styles import apply_global_styles
 
+# Import exception for Adobe conversion errors
+from src.converter import AdobeConversionError
+
 # Page config
 st.set_page_config(
     page_title="Single PDF - xAI PDF Converter",
@@ -137,14 +140,64 @@ if uploaded_file:
             # Step 1: Conversion (if needed)
             docx_path = None
             if operation in ["Convert to DOCX", "Convert + Analyze"]:
-                status_text.text("📄 Converting PDF to DOCX...")
+                status_text.text("📄 Converting PDF to DOCX (Adobe PDF Services)...")
                 progress_bar.progress(30)
 
-                with st.spinner("Converting PDF to DOCX..."):
-                    docx_path = converter.convert_pdf_to_docx(
-                        tmp_pdf_path,
-                        output_dir / f"{uploaded_file.name.replace('.pdf', '.docx')}"
-                    )
+                # Check if user has already chosen to use fallback
+                use_fallback = st.session_state.get('use_pdf2docx_fallback', False)
+
+                try:
+                    with st.spinner("Converting PDF to DOCX with Adobe..."):
+                        docx_path = converter.convert_pdf_to_docx(
+                            tmp_pdf_path,
+                            output_dir / f"{uploaded_file.name.replace('.pdf', '.docx')}",
+                            allow_fallback=use_fallback
+                        )
+                except AdobeConversionError as adobe_err:
+                    # Adobe conversion failed - show warning and ask user
+                    progress_bar.progress(0)
+                    st.warning(f"⚠️ **Conversion Adobe échouée:** {adobe_err}")
+
+                    if adobe_err.can_fallback:
+                        st.markdown("""
+                        ---
+                        ### 🔄 Option de secours disponible
+
+                        La conversion Adobe a échoué, mais vous pouvez utiliser **pdf2docx** comme méthode alternative.
+
+                        **Note:** La qualité de pdf2docx est généralement inférieure à Adobe:
+                        - ❌ Moins bonne préservation de la mise en page
+                        - ❌ Problèmes possibles avec les tableaux complexes
+                        - ❌ Pas de support OCR natif pour les PDFs scannés
+
+                        **Voulez-vous utiliser pdf2docx pour ce fichier ?**
+                        """)
+
+                        col_yes, col_no = st.columns(2)
+                        with col_yes:
+                            if st.button("✅ Oui, utiliser pdf2docx", type="primary", key="fallback_yes"):
+                                st.session_state['use_pdf2docx_fallback'] = True
+                                st.rerun()
+                        with col_no:
+                            if st.button("❌ Non, annuler", type="secondary", key="fallback_no"):
+                                st.session_state['use_pdf2docx_fallback'] = False
+                                st.error("Conversion annulée par l'utilisateur.")
+                                st.stop()
+                        st.stop()
+                    else:
+                        st.error("""
+                        ❌ **Aucune méthode de conversion disponible.**
+
+                        Veuillez configurer Adobe PDF Services dans les paramètres ou installer pdf2docx:
+                        ```
+                        pip install pdf2docx
+                        ```
+                        """)
+                        st.stop()
+
+                # Reset fallback flag after successful conversion
+                if 'use_pdf2docx_fallback' in st.session_state:
+                    del st.session_state['use_pdf2docx_fallback']
 
                 if docx_path and docx_path.exists():
                     st.success(f"✅ Conversion complete: {docx_path.name}")

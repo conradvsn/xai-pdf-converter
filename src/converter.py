@@ -13,6 +13,23 @@ from src.config import (
     PYTHON_DOCX_AVAILABLE, OPENPYXL_AVAILABLE, ADOBE_PDF_AVAILABLE, logger
 )
 
+
+class AdobeConversionError(Exception):
+    """
+    Exception raised when Adobe conversion fails or is not available.
+    Used to signal to the UI that user intervention is needed.
+    """
+    def __init__(self, message: str, reason: str = "unknown", can_fallback: bool = True):
+        """
+        Args:
+            message: Human-readable error message
+            reason: Error type - "not_available", "credentials", "quota", "timeout", "conversion_failed"
+            can_fallback: Whether fallback to pdf2docx is possible
+        """
+        super().__init__(message)
+        self.reason = reason
+        self.can_fallback = can_fallback and PDF2DOCX_AVAILABLE
+
 # Import modules
 from src.analysis.pdf_analyzer import get_pdf_page_count, is_scanned_pdf, detect_images_in_pdf
 from src.ocr.ocr_cache import OCRCache
@@ -73,11 +90,12 @@ class SECPDFConverter:
         # Cache OCR
         self.ocr_cache = OCRCache(self.pdf_path, verbose=verbose)
     
-    def convert(self, start_page=0, end_page=None, use_parallel=None, pages_per_chunk=20, 
-                use_ocr=False, auto_detect_scanned=False, **kwargs):
+    def convert(self, start_page=0, end_page=None, use_parallel=None, pages_per_chunk=20,
+                use_ocr=False, auto_detect_scanned=False, allow_fallback=False, **kwargs):
         """
         Convertit le PDF en DOCX en préservant la structure originale.
-        
+        UTILISE TOUJOURS ADOBE PAR DÉFAUT. Si Adobe échoue, une exception est levée.
+
         Args:
             start_page: Page de départ (0-indexed)
             end_page: Page de fin (None = toutes les pages)
@@ -85,22 +103,23 @@ class SECPDFConverter:
             pages_per_chunk: Nombre de pages par chunk
             use_ocr: Force l'utilisation de l'OCR
             auto_detect_scanned: Détecte automatiquement si le PDF est scanné
+            allow_fallback: Si True, utilise pdf2docx en fallback (DOIT être explicitement demandé par l'utilisateur)
             **kwargs: Arguments supplémentaires
         """
         self.docx_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Détection automatique des PDFs scannés
         if auto_detect_scanned and not use_ocr:
             is_scanned = is_scanned_pdf(self.pdf_path)
             if is_scanned:
                 use_ocr = True
                 logger.info("📷 Scanned PDF detected → Switching to OCR mode")
-        
+
         # Mode OCR
         if use_ocr:
             if not OCR_AVAILABLE or ocr_convert_with_ocr is None:
                 raise ImportError("OCR libraries not available. Install: pip install ocrmypdf")
-            
+
             logger.info("🔄 Using OCR mode")
             ocr_convert_with_ocr(
                 self.pdf_path, self.docx_path, self.ocr_cache,
@@ -109,10 +128,12 @@ class SECPDFConverter:
             apply_post_processing(self.docx_path)
             logger.info("✅ OCR conversion completed")
             return
-        
-        # PRIORITY 1: Adobe PDF Services (industry standard, best quality)
-        # Adobe handles everything automatically: complex PDFs, scanned PDFs, OCR, etc.
-        # Includes extended timeouts (120s) and automatic retry logic (3 attempts)
+
+        # ============================================================================
+        # ADOBE PDF SERVICES - MÉTHODE OBLIGATOIRE PAR DÉFAUT
+        # Adobe est la méthode de conversion standard (meilleure qualité)
+        # Si Adobe échoue, on lève une exception pour demander à l'utilisateur
+        # ============================================================================
         from src.adobe_converter import convert_pdf_to_docx_adobe, is_adobe_available
 
         if is_adobe_available():
@@ -123,32 +144,57 @@ class SECPDFConverter:
                 apply_post_processing(self.docx_path)
                 return
             except Exception as e:
-                # Adobe conversion failed after retries
-                # Re-raise the exception - NO FALLBACK per user request
+                error_str = str(e).lower()
+
+                # Déterminer le type d'erreur pour informer l'utilisateur
+                if "quota" in error_str or "limit" in error_str:
+                    reason = "quota"
+                    message = "Quota Adobe dépassé. Veuillez attendre le renouvellement mensuel ou ajouter un autre compte."
+                elif "timeout" in error_str or "timed out" in error_str:
+                    reason = "timeout"
+                    message = f"Timeout Adobe - le fichier est peut-être trop volumineux: {self.pdf_path.name}"
+                elif "invalid_client" in error_str or "credential" in error_str:
+                    reason = "credentials"
+                    message = "Les credentials Adobe sont invalides ou expirés."
+                else:
+                    reason = "conversion_failed"
+                    message = f"La conversion Adobe a échoué: {e}"
+
                 logger.error(f"❌ Adobe conversion failed: {e}")
-                raise RuntimeError(f"Adobe PDF conversion failed: {e}") from e
 
-        # If Adobe is not available at all, show setup instructions
+                # Si l'utilisateur a explicitement autorisé le fallback, on utilise pdf2docx
+                if allow_fallback and PDF2DOCX_AVAILABLE:
+                    logger.warning("⚠️ Fallback vers pdf2docx autorisé par l'utilisateur")
+                    # Continue to pdf2docx fallback below
+                else:
+                    # Lever l'exception pour que l'UI puisse demander à l'utilisateur
+                    raise AdobeConversionError(message, reason=reason, can_fallback=PDF2DOCX_AVAILABLE) from e
+        else:
+            # Adobe n'est pas disponible du tout
+            logger.error("❌ Adobe PDF Services not available")
+
+            if allow_fallback and PDF2DOCX_AVAILABLE:
+                logger.warning("⚠️ Adobe non disponible - Fallback vers pdf2docx autorisé par l'utilisateur")
+                # Continue to pdf2docx fallback below
+            else:
+                # Lever l'exception pour que l'UI puisse demander à l'utilisateur
+                raise AdobeConversionError(
+                    "Adobe PDF Services n'est pas configuré. Veuillez configurer vos credentials Adobe ou autoriser le fallback vers pdf2docx.",
+                    reason="not_available",
+                    can_fallback=PDF2DOCX_AVAILABLE
+                )
+
+        # ============================================================================
+        # FALLBACK PDF2DOCX - UNIQUEMENT SI EXPLICITEMENT AUTORISÉ PAR L'UTILISATEUR
+        # ============================================================================
         if not PDF2DOCX_AVAILABLE:
-            from src.adobe_converter import print_adobe_setup_instructions
-            logger.error("No conversion library available!")
-            print("\n" + "="*80)
-            print(" " * 28 + "❌ CONVERSION ERROR")
-            print("="*80)
-            print("\nNo PDF conversion library is installed.")
-            print()
-            print("RECOMMENDED (Best Quality):")
-            print("  pip install pdfservices-sdk")
-            print()
-            print("Then configure Adobe credentials (see instructions below)")
-            print()
-            print_adobe_setup_instructions()
-            print("\nALTERNATIVE (Fallback):")
-            print("  pip install pdf2docx")
-            print("="*80)
-            raise ImportError("No PDF conversion library available")
+            raise AdobeConversionError(
+                "Aucune méthode de conversion disponible. Installez pdfservices-sdk et configurez Adobe.",
+                reason="not_available",
+                can_fallback=False
+            )
 
-        logger.info("Using pdf2docx (fallback)")
+        logger.info("📄 Using pdf2docx (fallback - autorisé par l'utilisateur)")
 
         # Détection du nombre de pages
         total_pages = get_pdf_page_count(self.pdf_path)
@@ -158,7 +204,7 @@ class SECPDFConverter:
             pages_to_convert = total_pages - start_page
         else:
             pages_to_convert = None
-        
+
         # Décision de parallélisation
         should_parallelize = False
         if use_parallel is True:
@@ -168,7 +214,7 @@ class SECPDFConverter:
         elif pages_to_convert and pages_to_convert > 100:
             should_parallelize = True
             logger.info(f"Large PDF detected ({pages_to_convert} pages), using parallel conversion")
-        
+
         # Parallélisation pour gros PDFs
         if should_parallelize and pages_to_convert and pages_to_convert > 50:
             try:
@@ -178,24 +224,24 @@ class SECPDFConverter:
                 return
             except Exception as e:
                 logger.warning(f"Parallel conversion failed, falling back to sequential: {e}")
-        
+
         # Conversion normale (séquentielle)
         try:
             self.converter = Converter(str(self.pdf_path))
-            
+
             convert_params = {
                 'start': start_page,
                 'end': end_page,
             }
             convert_params.update(kwargs)
-            
+
             from src.config import suppress_output
             with suppress_output(verbose=self.verbose):
                 self.converter.convert(str(self.docx_path), **convert_params)
-            
+
             if self.verbose:
                 logger.info("PDF conversion completed successfully")
-            
+
         except Exception as e:
             if self.converter:
                 try:
@@ -468,4 +514,4 @@ class SECPDFConverter:
         return detect_sensitive_information(self.pdf_path, verbose=verbose)
 
 
-__all__ = ['SECPDFConverter']
+__all__ = ['SECPDFConverter', 'AdobeConversionError']
