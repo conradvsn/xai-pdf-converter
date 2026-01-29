@@ -7,6 +7,8 @@ from pathlib import Path
 import sys
 import tempfile
 import time
+import zipfile
+import io
 from typing import List
 
 # Add parent directories to path
@@ -386,21 +388,40 @@ if uploaded_files:
             # Download results
             st.markdown("### 💾 Download Results")
 
-            st.info(f"📁 Results saved to: {output_dir}")
-
             # List output files
             output_files = list(output_dir.glob('*'))
             if output_files:
-                st.write(f"**{len(output_files)} file(s) generated:**")
-                for file in output_files:
-                    col1, col2 = st.columns([3, 1])
-                    with col1:
-                        st.text(f"📄 {file.name}")
-                    with col2:
-                        with open(file, 'rb') as f:
+                # Create ZIP file with all results
+                zip_buffer = io.BytesIO()
+                with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                    for file in output_files:
+                        zip_file.write(file, file.name)
+                zip_buffer.seek(0)
+
+                # Download All button (prominent)
+                st.download_button(
+                    label=f"📦 Download All ({len(output_files)} files)",
+                    data=zip_buffer,
+                    file_name=f"batch_results_{int(time.time())}.zip",
+                    mime="application/zip",
+                    type="primary",
+                    key="download_all_zip"
+                )
+
+                st.markdown("---")
+
+                # Individual files in expander
+                with st.expander(f"📄 Individual Files ({len(output_files)})"):
+                    for file in output_files:
+                        col1, col2 = st.columns([3, 1])
+                        with col1:
+                            st.text(f"📄 {file.name}")
+                        with col2:
+                            with open(file, 'rb') as f:
+                                file_data = f.read()
                             st.download_button(
                                 label="⬇️",
-                                data=f,
+                                data=file_data,
                                 file_name=file.name,
                                 key=f"download_{file.name}"
                             )
